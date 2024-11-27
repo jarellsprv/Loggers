@@ -1,4 +1,5 @@
 print(" -- Starting Logging Process -- ")
+task.wait(3)
 for count = 0, 4 do
     local logFileName = "JBTestLog" .. tostring(count) .. ".txt"
     writefile(logFileName, "")
@@ -36,6 +37,7 @@ for count = 0, 4 do
 
                 -- Log upvalues
                 appendToLog("Upvalues:")
+                local upvalues = debug.getupvalues(search)
                 for index, value in pairs(upvalues) do
                     appendToLog(index .. ": " .. tostring(value) .. " (" .. typeof(value) .. ")")
                 end
