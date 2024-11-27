@@ -1,4 +1,5 @@
 print(" -- Starting Logging Process -- ")
+task.wait(3)
 for count = 0, 4 do
     local logFileName = "JBTestLog" .. tostring(count) .. ".txt"
     writefile(logFileName, "")
