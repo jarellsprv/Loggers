@@ -1,0 +1,84 @@
+print(" -- Starting Logging Process -- ")
+task.wait(3)
+
+local logFileName = "Jb func log.txt"
+writefile(logFileName, "")
+
+local function appendToLog(line)
+    appendfile(logFileName, line .. "\n")
+    task.wait(0.000011)
+end
+
+local loggedRemotes = {}
+
+local function logRemote(name, source, funcInfo)
+    appendToLog(name .. " {")
+    appendToLog("Source: " .. source)
+    appendToLog("Function: " .. funcInfo)
+    appendToLog("}")
+    appendToLog("")
+    task.wait(0.000011)
+end
+
+local function checkFunction(func)
+    local info = debug.getinfo(func)
+    if info.what == "Lua" then
+        local constants = debug.getconstants(func)
+        local hasFireServer = false
+
+        -- Check if the function contains FireServer constant
+        for _, constant in ipairs(constants) do
+            if typeof(constant) == "string" and constant == "FireServer" then
+                hasFireServer = true
+                break
+            end
+        end
+
+        if hasFireServer then
+            -- Log constants
+            appendToLog("Constants for function: " .. (info.name or "Unnamed"))
+            for _, constant in ipairs(constants) do
+                -- Ensure constant is a valid type (string, number, etc.)
+                if typeof(constant) ~= "Instance" then
+                    appendToLog("  Constant: " .. tostring(constant))
+                end
+            end
+
+            -- Log upvalues
+            local upvalues = {}
+            for i = 1, info.nups do
+                local name, value = debug.getupvalue(func, i)
+                table.insert(upvalues, {name = name, value = value})
+            end
+            appendToLog("Upvalues for function: " .. (info.name or "Unnamed"))
+            for _, upval in ipairs(upvalues) do
+                appendToLog("  Upvalue: " .. tostring(upval.name) .. " = " .. tostring(upval.value))
+            end
+
+            -- Log remote if FireServer is used
+            local remoteName = tostring(info.name or "Unnamed Remote")
+            local source = tostring(info.source or "N/A")
+            local funcInfo = (info.short_src or "N/A") .. ", Line: " .. tostring(info.currentline)
+
+            if not loggedRemotes[remoteName] then
+                logRemote(remoteName, source, funcInfo)
+                loggedRemotes[remoteName] = true
+            end
+        end
+    end
+    task.wait(0.000011)
+end
+local total = #getgc(true)
+print("Things to log: " .. total)
+local count = 0
+for _, obj in ipairs(getgc(true)) do
+    if typeof(obj) == "function" then
+        checkFunction(obj)
+        task.wait(0.0000000001)  -- 0.1-second delay between function checks
+        count = count + 1
+        print("Logged: " .. count .. "/" .. total)
+    end
+end
+
+print("RemoteEvent log written to: " .. logFileName)
+print(" -- Completed. -- ")
